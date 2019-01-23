@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "913134481638",
+    "firebase_url": "https://passwordmanager-90f6f.firebaseio.com",
+    "project_id": "passwordmanager-90f6f",
+    "storage_bucket": "passwordmanager-90f6f.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:913134481638:android:4aec0ac08368589c",
+        "android_client_info": {
+          "package_name": "com.maksimka101.passwordmanager"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "913134481638-hskudkrfbr9qv4pcvk55u3al0irqqa63.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-M4ecuyAld3kJFli1bolc_hEoBJkIaUU"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
