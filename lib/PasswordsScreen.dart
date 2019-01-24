@@ -2,15 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'PasswordGenerator.dart';
 import 'package:path_provider/path_provider.dart';
-import 'Coder.dart';
-
-class Password {
-  String title;
-  String login;
-  String password;
-  int id;
-  Password(this.title, this.login, this.password, this.id);
-}
+import 'Password.dart';
 
 class PasswordList extends StatefulWidget {
 
@@ -40,7 +32,8 @@ class PasswordListState extends State<PasswordList> {
     final File file = File("${path.path}/passwords.txt");
     String data = "Divider\n";
     _passwordsList.forEach((i){
-      data += "${Coder().encrypt(i.title, _keyForPasswords)}\n${Coder().encrypt(i.login, _keyForPasswords)}\n${Coder().encrypt(i.password, _keyForPasswords)}\nDivider\n";
+      i.encryptAllFields(_keyForPasswords);
+      data += "${i.title}\n${i.login}\n${i.password}\nDivider\n";
     });
     file.writeAsStringSync(data);
   });
@@ -60,9 +53,9 @@ class PasswordListState extends State<PasswordList> {
     // Расшифровываю данные
     for ( int i = 1; i < tmpData.length-1; i++) {
       tmpData[i].removeLast();
-      _passwordsList.add(Password(Coder().decrypt(tmpData[i][0], _keyForPasswords),
-          Coder().decrypt(tmpData[i][1], _keyForPasswords),
-          Coder().decrypt(tmpData[i][2], _keyForPasswords), i-1));
+      final password = Password(tmpData[i][0], tmpData[i][1], tmpData[i][2], i-1);
+      password.decryptAllFields(_keyForPasswords);
+      _passwordsList.add(password);
     }
     setState(() {});
     if (_useServer) _loadPasswordsFromServer();

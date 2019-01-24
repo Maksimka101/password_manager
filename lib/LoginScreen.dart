@@ -38,7 +38,6 @@ class LoginState extends State<Login> {
         idToken: googleAuth.idToken,
         accessToken: googleAuth.accessToken
     );
-    print("${user.displayName}");
     return user;
   }
 
@@ -86,6 +85,10 @@ class LoginState extends State<Login> {
             image: AssetImage("images/mterial-background.jpg"),
             fit: BoxFit.cover)
     );
+
+    Firestore.instance.collection("books").document("favorite").snapshots().listen((data)
+      => data.data.forEach((key, value) => print("key: $key, value: $value")));
+
   }
 
   @override
