@@ -1,4 +1,4 @@
 # password_manager
 
-A new Flutter application.
-
+Менеджер паролей.
+Что то еще ожидали?)
