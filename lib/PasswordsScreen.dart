@@ -31,10 +31,11 @@ class PasswordListState extends State<PasswordList> {
   void _savePasswordsToFile() async => getApplicationDocumentsDirectory().then((path){
     final File file = File("${path.path}/passwords.txt");
     String data = "Divider\n";
-    _passwordsList.forEach((i){
+    for (Password password in _passwordsList) {
+      final i = password;
       i.encryptAllFields(_keyForPasswords);
       data += "${i.title}\n${i.login}\n${i.password}\nDivider\n";
-    });
+    }
     file.writeAsStringSync(data);
   });
 
@@ -85,6 +86,7 @@ class PasswordListState extends State<PasswordList> {
         child: ListView.builder(
           itemCount: _passwordsList.length,
           itemBuilder: (context, id) {
+            print(_passwordsList[id].title);
             final data = _passwordsList[id];
             return Dismissible(
               background: Container(

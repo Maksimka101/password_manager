@@ -7,11 +7,14 @@ import 'package:path_provider/path_provider.dart';
 import 'PasswordGenerator.dart';
 import 'PasswordsScreen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'Password.dart';
 
 class Login extends StatefulWidget {
   @override
   State<StatefulWidget> createState() => LoginState();
 }
+
+
 
 class LoginState extends State<Login> {
   // при входе в первый раз я узнаю имя пользователя и шифрую его по паролем
@@ -22,8 +25,8 @@ class LoginState extends State<Login> {
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   String _userName = "Guest";
-  String _userGmail;
-  String _userGmailEncrypted;
+  String _userMail;
+  String _userMailEncrypted;
   bool _isAuthorized = false;
   String _greetingText = "Привет!";
   final _formKey = GlobalKey<FormState>();
@@ -58,7 +61,7 @@ class LoginState extends State<Login> {
           String variable = i.split(":")[0];
           String data = i.split(":")[1];
           if (variable == "_useServer") _useServer = data == "true";
-          if (variable == "_userGmailEncrypted") _userGmailEncrypted = data;
+          if (variable == "_userGmailEncrypted") _userMailEncrypted = data;
         }
       });
     } catch (e) {
@@ -73,9 +76,12 @@ class LoginState extends State<Login> {
     _auth.currentUser().then((FirebaseUser user) {
       if (user != null){
         _readSettings();
+        // TODO disable fast start
+        Navigator.push(context, MaterialPageRoute(
+            builder: (context) => PasswordList("MaksimkA101", _useServer)));
         _isAuthorized = true;
         _userName = user.displayName;
-        _userGmail = user.email;
+        _userMail = user.email;
         _greetingText = _makeGreetingText();
         setState(() {});
       }
@@ -85,9 +91,6 @@ class LoginState extends State<Login> {
             image: AssetImage("images/mterial-background.jpg"),
             fit: BoxFit.cover)
     );
-
-    Firestore.instance.collection("books").document("favorite").snapshots().listen((data)
-      => data.data.forEach((key, value) => print("key: $key, value: $value")));
 
   }
 
@@ -119,7 +122,7 @@ class LoginState extends State<Login> {
                           style: TextStyle(fontSize: 23.0, color: Colors.white),
                           validator: (String value) {
                             if (value.isEmpty) return "Введите пароль";
-                            if (_userGmail != Coder().decrypt(_userGmailEncrypted, value))
+                            if (_userMail != Coder().decrypt(_userMailEncrypted, value))
                               return "Не верный пароль";
                             else _userPassword = value;
                           }
@@ -162,7 +165,7 @@ class AuthoriseState extends State<Authorise> {
   String _settingDescriptionText = "Перед началом совершите несколько действий, "
       "обязательных для работы приложения:";
   String _userName;
-  String _userGmail;
+  String _userMail;
   final _formKey = GlobalKey<FormState>();
   String _userPassword;
   bool _useServer = true;
@@ -181,17 +184,24 @@ class AuthoriseState extends State<Authorise> {
   void _saveSettings() async {
     getApplicationDocumentsDirectory().then((path) {
       final file = File("${path.path}/settings.txt");
-      file.writeAsStringSync("_useServer:$_useServer\n_userGmailEncrypted:${Coder().encrypt(_userGmail, _userPassword)}");
+      file.writeAsStringSync("_useServer:$_useServer\n_userGmailEncrypted:${Coder().encrypt(_userMail, _userPassword)}");
     });
   }
 
   _savePassword() {
     getApplicationDocumentsDirectory().then((path) {
       final file = File("${path.path}/passwords.txt");
-      file.writeAsStringSync("Divider\n${Coder().encrypt("Пароль от паролей", _userPassword)}\n"
-          "${Coder().encrypt(_userName, _userPassword)}\n"
-          "${Coder().encrypt(_userPassword, _userPassword)}\nDivider\n");
+      final password = Password("Пароль от паролей", _userName, _userPassword, 0);
+      password.encryptAllFields(_userPassword);
+      file.writeAsStringSync("Divider\n${password.title}\n"
+          "${password.login}\n"
+          "${password.password}\nDivider\n");
     });
+    // if (_useServer) {
+    //   Firestore.instance.collection("users").document(_userMail).setData({
+    //
+    //   });
+    // }
   }
 
 
@@ -400,7 +410,7 @@ class AuthoriseState extends State<Authorise> {
                                 _handleSignIn().then((FirebaseUser user) {
                                   setState(() {
                                     _userName = user.displayName;
-                                    _userGmail = user.email;
+                                    _userMail = user.email;
                                   });
                                 }),
                             child: Text("Войдите через Google",
@@ -420,6 +430,7 @@ class AuthoriseState extends State<Authorise> {
         child: Icon(Icons.check),
         backgroundColor: Colors.blueGrey,
         onPressed: () {
+          _savePassword();
           Navigator.push(context, MaterialPageRoute(
               builder: (context) => PasswordList(_userPassword, _useServer)));
         },
