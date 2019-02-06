@@ -167,7 +167,7 @@ class AuthoriseState extends State<Authorise> {
   String _userMail;
   final _formKey = GlobalKey<FormState>();
   String _userPassword;
-  bool _useServer;
+  bool _useServer = false;
 
 
   Future<FirebaseUser> _handleSignIn() async{

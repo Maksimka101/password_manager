@@ -10,7 +10,7 @@ class Password {
 
   void decryptAllFields(String decryptKey) {
     title = Coder().decrypt(title, decryptKey);
-    login = Coder().decrypt(password, decryptKey);
+    login = Coder().decrypt(login, decryptKey);
     password = Coder().decrypt(password, decryptKey);
   }
 

@@ -86,7 +86,6 @@ class PasswordListState extends State<PasswordList> {
         child: ListView.builder(
           itemCount: _passwordsList.length,
           itemBuilder: (context, id) {
-            print(_passwordsList[id].title);
             final data = _passwordsList[id];
             return Dismissible(
               background: Container(
