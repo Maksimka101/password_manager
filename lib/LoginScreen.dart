@@ -91,7 +91,6 @@ class LoginState extends State<Login> {
             image: AssetImage("images/mterial-background.jpg"),
             fit: BoxFit.cover)
     );
-
   }
 
   @override
@@ -168,7 +167,7 @@ class AuthoriseState extends State<Authorise> {
   String _userMail;
   final _formKey = GlobalKey<FormState>();
   String _userPassword;
-  bool _useServer = true;
+  bool _useServer;
 
 
   Future<FirebaseUser> _handleSignIn() async{
@@ -188,7 +187,7 @@ class AuthoriseState extends State<Authorise> {
     });
   }
 
-  _savePassword() {
+  void _savePassword() async {
     getApplicationDocumentsDirectory().then((path) {
       final file = File("${path.path}/passwords.txt");
       final password = Password("Пароль от паролей", _userName, _userPassword, 0);
@@ -197,11 +196,27 @@ class AuthoriseState extends State<Authorise> {
           "${password.login}\n"
           "${password.password}\nDivider\n");
     });
-    // if (_useServer) {
-    //   Firestore.instance.collection("users").document(_userMail).setData({
-    //
-    //   });
-    // }
+    if (_useServer) {
+      final db = Firestore.instance;
+      final userDb = db.collection(_userMail).document("passwords");
+      userDb.snapshots().listen((data) {
+        if (data.data == null) userDb.setData({
+          "0": {
+            "title": Coder().encrypt("Пароль от паролей", _userPassword),
+            "login": Coder().encrypt(_userName, _userPassword),
+            "password": Coder().encrypt(_userName, _userPassword)
+          }
+        });
+        else userDb.updateData({
+          "0": {
+            "title": Coder().encrypt("Пароль от паролей", _userPassword),
+            "login": Coder().encrypt(_userName, _userPassword),
+            "password": Coder().encrypt(_userName, _userPassword)
+          }
+        });
+      });
+    }
+
   }
 
 
@@ -411,6 +426,7 @@ class AuthoriseState extends State<Authorise> {
                                   setState(() {
                                     _userName = user.displayName;
                                     _userMail = user.email;
+                                    print(user);
                                   });
                                 }),
                             child: Text("Войдите через Google",
