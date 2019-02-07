@@ -63,11 +63,13 @@ class LoginState extends State<Login> {
           if (variable == "_useServer") _useServer = data == "true";
           if (variable == "_userGmailEncrypted") _userMailEncrypted = data;
         }
+        Navigator.push(context, MaterialPageRoute(
+            builder: (context) => PasswordList("MaksimkA101", _useServer, _userMail)));
+        setState(() {});
       });
     } catch (e) {
       print("error: $e");
     }
-    setState(() {});
   }
 
   @override
@@ -77,8 +79,6 @@ class LoginState extends State<Login> {
       if (user != null){
         _readSettings();
         // TODO disable fast start
-        Navigator.push(context, MaterialPageRoute(
-            builder: (context) => PasswordList("MaksimkA101", _useServer)));
         _isAuthorized = true;
         _userName = user.displayName;
         _userMail = user.email;
@@ -139,7 +139,7 @@ class LoginState extends State<Login> {
             onPressed: () {
               if (_formKey.currentState.validate()) {
                 Navigator.push(context, MaterialPageRoute(
-                    builder: (context) => PasswordList(_userPassword, _useServer)));
+                    builder: (context) => PasswordList(_userPassword, _useServer, _userMail)));
               }
             }
         ),
@@ -448,7 +448,7 @@ class AuthoriseState extends State<Authorise> {
         onPressed: () {
           _savePassword();
           Navigator.push(context, MaterialPageRoute(
-              builder: (context) => PasswordList(_userPassword, _useServer)));
+              builder: (context) => PasswordList(_userPassword, _useServer, _userMail)));
         },
       ) : null,
     );

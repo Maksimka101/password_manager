@@ -3,16 +3,18 @@ import 'package:flutter/material.dart';
 import 'PasswordGenerator.dart';
 import 'package:path_provider/path_provider.dart';
 import 'Password.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PasswordList extends StatefulWidget {
 
   final String _key;
   final bool _server;
+  final String _userMail;
 
-  PasswordList(final this._key, final this._server);
+  PasswordList(this._key, this._server, this._userMail);
 
   @override
-  State<StatefulWidget> createState() => PasswordListState(_key, _server);
+  State<StatefulWidget> createState() => PasswordListState(_key, _server, _userMail);
 }
 
 class PasswordListState extends State<PasswordList> {
@@ -23,10 +25,12 @@ class PasswordListState extends State<PasswordList> {
           image: AssetImage("images/mterial-background.jpg"),
           fit: BoxFit.cover));
   bool _useServer;
+  final _db = Firestore.instance;
+  final String _userMail;
   List<Password> _passwordsList = List();
 
 
-  PasswordListState(final this._keyForPasswords, final this._useServer);
+  PasswordListState(this._keyForPasswords, this._useServer, this._userMail);
 
   void _savePasswordsToFile() async => getApplicationDocumentsDirectory().then((path){
     final File file = File("${path.path}/passwords.txt");
@@ -40,7 +44,31 @@ class PasswordListState extends State<PasswordList> {
   });
 
   void _loadPasswordsFromServer() {
-    print("Loading data from server");
+    print("Load data from server");
+    _db.collection(_userMail).document("passwords").snapshots().listen((data) {
+      if (data.data != null) {
+        for (String id  in data.data.keys) {
+          if (_passwordsList.isNotEmpty) {
+            for (Password password in _passwordsList) {
+              if (password.id.toString() != id) {
+                final passwordData = data.data[id];
+                final processedPassword = Password(passwordData["title"], passwordData["login"],
+                    passwordData["password"], int.parse(id));
+                processedPassword.decryptAllFields(_keyForPasswords);
+                _passwordsList.add(processedPassword);
+              }
+            }
+          } else {
+            final passwordData = data.data[id];
+            final processedPassword = Password(passwordData["title"], passwordData["login"],
+                passwordData["password"], int.parse(id));
+            processedPassword.decryptAllFields(_keyForPasswords);
+            _passwordsList.add(processedPassword);
+          }
+        }
+        setState(() {});
+      }
+    });
   }
 
   void _loadPasswords() async => getApplicationDocumentsDirectory().then((path){
@@ -58,8 +86,9 @@ class PasswordListState extends State<PasswordList> {
       password.decryptAllFields(_keyForPasswords);
       _passwordsList.add(password);
     }
-    setState(() {});
+    print(_useServer);
     if (_useServer) _loadPasswordsFromServer();
+    setState(() {});
   });
 
   @override
