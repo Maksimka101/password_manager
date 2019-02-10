@@ -24,15 +24,12 @@ class LoginState extends State<Login> {
 
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  String _userName = "Guest";
+  String _userName = "User";
   String _userMail;
   String _userMailEncrypted;
-  bool _isAuthorized = false;
   String _greetingText = "Привет!";
   final _formKey = GlobalKey<FormState>();
   String _userPassword;
-  BoxDecoration _boxDecoration;
-  bool _useServer;
 
   Future<FirebaseUser> _handleSignIn() async{
     GoogleSignInAccount googleUser = await _googleSignIn.signIn();
@@ -53,23 +50,19 @@ class LoginState extends State<Login> {
   }
 
   void _readSettings() async {
-    try {
-      getApplicationDocumentsDirectory().then((path){
-        final file = File("${path.path}/settings.txt");
-        final data = file.readAsStringSync().split("\n");
-        for (String i in data) {
-          String variable = i.split(":")[0];
-          String data = i.split(":")[1];
-          if (variable == "_useServer") _useServer = data == "true";
-          if (variable == "_userGmailEncrypted") _userMailEncrypted = data;
-        }
-        Navigator.push(context, MaterialPageRoute(
-            builder: (context) => PasswordList("MaksimkA101", _useServer, _userMail)));
-        setState(() {});
-      });
-    } catch (e) {
-      print("error: $e");
-    }
+    getApplicationDocumentsDirectory().then((path){
+      final file = File("${path.path}/settings.txt");
+      final data = file.readAsStringSync().split("\n");
+      for (String i in data) {
+        String variable = i.split(":")[0];
+        String value = i.split(":")[1];
+        if (variable == "_userGmailEncrypted") _userMailEncrypted = value;
+        else if (variable == "_userName") _userName = value;
+      }
+      //Navigator.push(context, MaterialPageRoute(
+      //    builder: (context) => PasswordList("MaksimkA101")));
+      setState(() {});
+    });
   }
 
   @override
@@ -79,27 +72,26 @@ class LoginState extends State<Login> {
       if (user != null){
         _readSettings();
         // TODO disable fast start
-        _isAuthorized = true;
-        _userName = user.displayName;
+        // _userName = user.displayName;
         _userMail = user.email;
         _greetingText = _makeGreetingText();
         setState(() {});
       }
     });
-    _boxDecoration = BoxDecoration(
-        image: DecorationImage(
-            image: AssetImage("images/mterial-background.jpg"),
-            fit: BoxFit.cover)
-    );
+
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isAuthorized) {
+    if (_userName != "User" && _userMailEncrypted != null) {
       return Scaffold(
         appBar: AppBar(title: Text("Аунтефикация"),),
         body: Container(
-          decoration: _boxDecoration,
+          decoration: BoxDecoration(
+              image: DecorationImage(
+                  image: AssetImage("images/mterial-background.jpg"),
+                  fit: BoxFit.cover)
+          ),
           child: Center(
               child: Column(
                 children: <Widget>[
@@ -139,7 +131,7 @@ class LoginState extends State<Login> {
             onPressed: () {
               if (_formKey.currentState.validate()) {
                 Navigator.push(context, MaterialPageRoute(
-                    builder: (context) => PasswordList(_userPassword, _useServer, _userMail)));
+                    builder: (context) => PasswordList(_userPassword)));
               }
             }
         ),
@@ -161,8 +153,6 @@ class AuthoriseState extends State<Authorise> {
   final double _horizontalPadding = 10.0;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  String _settingDescriptionText = "Перед началом совершите несколько действий, "
-      "обязательных для работы приложения:";
   String _userName;
   String _userMail;
   final _formKey = GlobalKey<FormState>();
@@ -183,7 +173,9 @@ class AuthoriseState extends State<Authorise> {
   void _saveSettings() async {
     getApplicationDocumentsDirectory().then((path) {
       final file = File("${path.path}/settings.txt");
-      file.writeAsStringSync("_useServer:$_useServer\n_userGmailEncrypted:${Coder().encrypt(_userMail, _userPassword)}");
+      file.writeAsStringSync("_useServer:$_useServer\n"
+          "_userGmailEncrypted:${Coder().encrypt(_userMail, _userPassword)}\n"
+          "_userName:$_userName");
     });
   }
 
@@ -411,7 +403,8 @@ class AuthoriseState extends State<Authorise> {
                       SizedBox(height: 30.0,),
 
                       Container(
-                        child: Text(_settingDescriptionText, textAlign: TextAlign.center,
+                        child: Text("Перед началом совершите несколько действий, "
+                            "обязательных для работы приложения:", textAlign: TextAlign.center,
                           style: TextStyle(color: Colors.white, fontSize: 20.0),),
                         padding: EdgeInsets.symmetric(horizontal: _horizontalPadding),
                       ),
@@ -426,7 +419,7 @@ class AuthoriseState extends State<Authorise> {
                                   setState(() {
                                     _userName = user.displayName;
                                     _userMail = user.email;
-                                    print(user);
+                                    print(_userName);
                                   });
                                 }),
                             child: Text("Войдите через Google",
@@ -448,7 +441,7 @@ class AuthoriseState extends State<Authorise> {
         onPressed: () {
           _savePassword();
           Navigator.push(context, MaterialPageRoute(
-              builder: (context) => PasswordList(_userPassword, _useServer, _userMail)));
+              builder: (context) => PasswordList(_userPassword)));
         },
       ) : null,
     );
