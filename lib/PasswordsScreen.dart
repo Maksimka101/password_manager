@@ -4,6 +4,7 @@ import 'PasswordGenerator.dart';
 import 'package:path_provider/path_provider.dart';
 import 'Password.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'Database.dart';
 
 class PasswordList extends StatefulWidget {
 
@@ -43,7 +44,24 @@ class PasswordListState extends State<PasswordList> {
     file.writeAsStringSync(data);
   });
 
-  void _loadPasswordsFromServer() {
+  void _savePasswordsToServer() async {
+    print("Save data to server");
+
+    final passwordsMap = Map<String, Map<String, String>>();
+    for (Password i in _passwordsList) {
+      final password = i;
+      password.encryptAllFields(_keyForPasswords);
+      passwordsMap[password.id.toString()] = {
+        "login": password.login,
+        "password": password.password,
+        "title": password.title
+      };
+    }
+
+    _db.collection(_userMail).document("passwords").updateData(passwordsMap);
+  }
+
+  void _loadPasswordsFromServer() async {
     print("Load data from server");
     _db.collection(_userMail).document("passwords").snapshots().listen((data) {
       if (data.data != null) {
@@ -65,8 +83,9 @@ class PasswordListState extends State<PasswordList> {
             processedPassword.decryptAllFields(_keyForPasswords);
             _passwordsList.add(processedPassword);
           }
+          print(_passwordsList);
+          setState(() {});
         }
-        setState(() {});
       }
     });
   }
@@ -100,6 +119,9 @@ class PasswordListState extends State<PasswordList> {
   void _addPassword(Password data){
     _passwordsList.add(data);
     _savePasswordsToFile();
+    if (_useServer) {
+      _savePasswordsToServer();
+    }
   }
 
   void _removePassword(int id){

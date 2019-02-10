@@ -25,6 +25,8 @@ dependencies:
   firebase_core: ^0.2.5
   path_provider: ^0.4.1
   cloud_firestore: ^0.8.2+3
+  connectivity: ^0.4.0+2
+
 
 
 dev_dependencies:
