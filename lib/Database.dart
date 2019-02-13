@@ -11,7 +11,7 @@ class Database {
   bool _useServer;
   final _db = Firestore.instance;
   final _keyForPasswords;
-  bool _synchronized = true;
+  bool _synchronized = false;
   String _userMail;
 
   Database(this._keyForPasswords);
@@ -19,27 +19,25 @@ class Database {
 
   // Load passwords, and settings for next job
 
-  void init() {
-
-    Future.wait([_syncSettings()]).then((_) {
-      if (!_synchronized) {
-        Connectivity().checkConnectivity().then((result) {
-          if (result != ConnectivityResult.none) {
-            _loadPasswordsFromAll();
-            _synchronized = true;
-            _syncSettings(onlySave: true);
-          }
-        });
-      } else {
-        if (_useServer) {
-          _loadPasswordsFromServer();
-          _savePasswordsToFile();
-        } else {
-          _loadPasswordsFromFile();
-        }
+  Future<void> init() async {
+    await _syncSettings();
+    if (!_synchronized) {
+      final result = await Connectivity().checkConnectivity();
+      if (result != ConnectivityResult.none) {
+        await _loadPasswordsFromAll();
+        _synchronized = true;
+        _syncSettings(onlySave: true);
+        _savePasswordsToServer();
       }
-    });
-
+    } else {
+      if (_useServer) {
+        await _loadPasswordsFromServer();
+        print(_passwords);
+        _savePasswordsToFile();
+      } else {
+        await _loadPasswordsFromFile();
+      }
+    }
   }
 
   // Load settings and save them to file
@@ -68,22 +66,20 @@ class Database {
     });
 
   // Load ALL passwords from server
-  void _loadPasswordsFromServer() async {
-    _db.collection(_userMail).document("passwords").snapshots().listen((data) {
-      if (data.data != null) {
-        for (final id in data.data.keys) {
-          final tmpData = data.data[id];
-          final password = Password(tmpData["title"], tmpData["login"], tmpData["password"], int.parse(id));
-          password.decryptAllFields(_keyForPasswords);
-          _passwords[int.parse(id)] = password;
-        }
+  void _loadPasswordsFromServer() a => _db.collection(_userMail).document("passwords").snapshots().listen((data) {
+    if (data != null) {
+      for (final id in data.data.keys) {
+        final tmpData = data.data[id];
+        final password = Password(tmpData["title"], tmpData["login"], tmpData["password"], int.parse(id));
+        password.decryptAllFields(_keyForPasswords);
+        _passwords[int.parse(id)] = password;
       }
-    });
-  }
-
+    }
+    print(_passwords);
+  });
 
   // Load ALL passwords from file
-  void _loadPasswordsFromFile() => getApplicationDocumentsDirectory().then((path){
+  Future<void> _loadPasswordsFromFile() => getApplicationDocumentsDirectory().then((path){
     final File file = File("${path.path}/passwords.txt");
     final List<String> data = file.readAsStringSync().split("Divider\n");
     final List<List<String>> tmpData = List();
@@ -101,28 +97,26 @@ class Database {
   });
 
   // Load ALL passwords from server and file
-  void _loadPasswordsFromAll() async {
+  Future<void> _loadPasswordsFromAll() => Future.wait([getApplicationDocumentsDirectory()]).then((List list) {
     _loadPasswordsFromServer();
-    getApplicationDocumentsDirectory().then((path){
-      final File file = File("${path.path}/passwords.txt");
-      final List<String> data = file.readAsStringSync().split("Divider\n");
-      final List<List<String>> tmpData = List();
-      data.forEach((elem) {
-        tmpData.add(elem.split("\n"));
-      });
-
-      // Расшифровываю данные
-      for ( int i = 1; i < tmpData.length-1; i++) {
-        if (!_passwords.containsKey(int.parse(tmpData[i][3]))) {
-          tmpData[i].removeLast();
-          final password = Password(tmpData[i][0], tmpData[i][1], tmpData[i][2],
-              int.parse(tmpData[i][3]));
-          password.decryptAllFields(_keyForPasswords);
-          _passwords[password.id] = password;
-        }
-      }
+    final path = list[1];
+    final File file = File("${path.path}/passwords.txt");
+    final List<String> data = file.readAsStringSync().split("Divider\n");
+    final List<List<String>> tmpData = List();
+    data.forEach((elem) {
+      tmpData.add(elem.split("\n"));
     });
-  }
+    // Расшифровываю данные
+    for ( int i = 1; i < tmpData.length-1; i++) {
+      tmpData[i].removeLast();
+      final password = Password(tmpData[i][0], tmpData[i][1], tmpData[i][2],
+          int.parse(tmpData[i][3]));
+      password.decryptAllFields(_keyForPasswords);
+      if (!_passwords.containsKey(int.parse(tmpData[i][3]))) {
+        _passwords[password.id] = password;
+      }
+    }
+  });
 
   // Save ALL passwords to file
   void _savePasswordsToFile() async => getApplicationDocumentsDirectory().then((path){
@@ -202,7 +196,7 @@ class Database {
     final _password = Password(title, login, password, _passwords.keys.last+1);
     _passwords[_password.id] = _password;
     _savePasswordsToFile();
-    _updatePasswordToServer(_password.id);
+    if (_useServer) _updatePasswordToServer(_password.id);
     return _password.id;
   }
 

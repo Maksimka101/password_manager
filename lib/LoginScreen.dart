@@ -59,8 +59,8 @@ class LoginState extends State<Login> {
         if (variable == "_userGmailEncrypted") _userMailEncrypted = value;
         else if (variable == "_userName") _userName = value;
       }
-      //Navigator.push(context, MaterialPageRoute(
-      //    builder: (context) => PasswordList("MaksimkA101")));
+      Navigator.push(context, MaterialPageRoute(
+          builder: (context) => PasswordList("MaksimkA101")));
       setState(() {});
     });
   }
@@ -72,7 +72,7 @@ class LoginState extends State<Login> {
       if (user != null){
         _readSettings();
         // TODO disable fast start
-        // _userName = user.displayName;
+        _userName = user.displayName;
         _userMail = user.email;
         _greetingText = _makeGreetingText();
         setState(() {});
@@ -186,7 +186,9 @@ class AuthoriseState extends State<Authorise> {
       password.encryptAllFields(_userPassword);
       file.writeAsStringSync("Divider\n${password.title}\n"
           "${password.login}\n"
-          "${password.password}\nDivider\n");
+          "${password.password}\n"
+          "${password.id.toString()}\n"
+          "Divider\n");
     });
     if (_useServer) {
       final db = Firestore.instance;
@@ -340,7 +342,9 @@ class AuthoriseState extends State<Authorise> {
             child: TextFormField(
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.white, fontSize: 25.0),
-              initialValue: PasswordGenerator().generatePassword(),
+              // TODO
+              initialValue: 'MaksimkA101',
+              //initialValue: PasswordGenerator().generatePassword(),
               validator: (String value) {
                 if (value.isEmpty) return "Вы не ввели пароль";
                 if (value.toLowerCase().split(" ").join("").contains(

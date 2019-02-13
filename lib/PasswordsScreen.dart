@@ -20,7 +20,7 @@ class PasswordListState extends State<PasswordList> {
       image: DecorationImage(
           image: AssetImage("images/mterial-background.jpg"),
           fit: BoxFit.cover));
-  List<int> _passwordsList;
+  List<int> _passwordsList = [];
 
   PasswordListState(this._keyForPasswords);
 
@@ -28,9 +28,11 @@ class PasswordListState extends State<PasswordList> {
   void initState() {
     super.initState();
     _db = Database(_keyForPasswords);
-    _db.init();
-    _passwordsList = _db.getPasswordIds();
-  }
+    _db.init().then((_){
+      _passwordsList = _db.getPasswordIds();
+      setState(() {});
+    });
+    }
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -95,7 +97,7 @@ class PasswordListState extends State<PasswordList> {
             pageBuilder: (context, _, __) => PasswordRequestWindow(),
             opaque: false,
           ));
-          if (data[0] != null && data[1] != null && data[2] != null) _db.addPassword(data[0], data[1], data[2]);
+          if (data[0] != null && data[1] != null && data[2] != null) _passwordsList.add(_db.addPassword(data[0], data[1], data[2]));
           setState((){});
         }
     ),
