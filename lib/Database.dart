@@ -4,11 +4,14 @@ import 'package:path_provider/path_provider.dart';
 import 'Password.dart';
 import 'package:connectivity/connectivity.dart';
 import 'Coder.dart';
+import 'dart:async';
+
 
 class Database {
 
   final _passwords = Map<int, Password>();
   bool _useServer;
+  StreamController<Map<int, String>> streamController = StreamController.broadcast();
   final _db = Firestore.instance;
   final _keyForPasswords;
   bool _synchronized = false;
@@ -66,7 +69,7 @@ class Database {
     });
 
   // Load ALL passwords from server
-  void _loadPasswordsFromServer() a => _db.collection(_userMail).document("passwords").snapshots().listen((data) {
+  void _loadPasswordsFromServer() => _db.collection(_userMail).document("passwords").snapshots().listen((data) {
     if (data != null) {
       for (final id in data.data.keys) {
         final tmpData = data.data[id];
